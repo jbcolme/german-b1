@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deutsch B1 Prüfungstrainer - Goethe & telc Vorbereitung</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-badge">
+        <span class="flag-icon">🇩🇪</span>
+        <span>CEFR B1 Exam Prep</span>
+      </div>
+      <h1>Deutsch B1 Prüfungstrainer</h1>
+      <p class="subtitle">Interaktive Übungen & Prüfungssimulation mit KI-generierten Aufgaben</p>
+    </header>
+
+    <!-- Main Card -->
+    <main class="main-card">
+      <!-- Setup Screen -->
+      <section id="setup-view" class="view-section active">
+        <div class="section-heading">
+          <h2>1. Thema & Modus wählen</h2>
+          <p>Wähle einen Grammatikschwerpunkt oder ein Wortschatzthema aus dem B1-Lehrplan.</p>
+        </div>
+
+        <form id="quiz-config-form" class="config-form">
+          <!-- Topic Selector -->
+          <div class="form-group">
+            <label for="topic-select" class="form-label">
+              <span class="label-icon">📚</span> Thema auswählen:
+            </label>
+            <select id="topic-select" class="form-select" required>
+              <optgroup label="Grammatik">
+                <option value="Konjunktiv II" data-subject="Grammatik" selected>Konjunktiv II (Wünsche, Höfliche Bitten, Ratschläge)</option>
+                <option value="Passiv (Präsens & Präteritum)" data-subject="Grammatik">Passiv (Präsens & Präteritum)</option>
+                <option value="Relativsätze (Nominativ, Akkusativ, Dativ, Präpositionen)" data-subject="Grammatik">Relativsätze (mit Relativpronomen & Präpositionen)</option>
+                <option value="Nebensätze mit Konjunktionen (weil, obwohl, dass, wenn, als, damit)" data-subject="Grammatik">Nebensätze (weil, obwohl, dass, wenn, als, damit)</option>
+                <option value="Verben mit festen Präpositionen" data-subject="Grammatik">Verben mit festen Präpositionen (warten auf, sich freuen über...)</option>
+                <option value="Adjektivdeklination" data-subject="Grammatik">Adjektivdeklination (bestimmter/unbestimmter/Nullartikel)</option>
+                <option value="Zweiteilige Konnektoren" data-subject="Grammatik">Zweiteilige Konnektoren (sowohl... als auch, nicht nur...)</option>
+                <option value="Infinitiv mit zu & um... zu" data-subject="Grammatik">Infinitivkonstruktionen (zu, um... zu, ohne... zu)</option>
+                <option value="Modalverben im Perfekt & Präteritum" data-subject="Grammatik">Modalverben (Präteritum & subjektive Bedeutung)</option>
+                <option value="N-Deklination" data-subject="Grammatik">N-Deklination (maskuline Nomen)</option>
+              </optgroup>
+              <optgroup label="Wortschatz & Alltagssituationen">
+                <option value="Beruf & Arbeitswelt" data-subject="Wortschatz & Alltag">Beruf & Arbeitswelt (Bewerbung, Kollegen, Arbeitsalltag)</option>
+                <option value="Wohnen & Nachbarschaft" data-subject="Wortschatz & Alltag">Wohnen & Nachbarschaft (Wohnungssuche, Mietvertrag)</option>
+                <option value="Gesundheit, Ernährung & Sport" data-subject="Wortschatz & Alltag">Gesundheit & Ernährung (Arztbesuch, Symptome)</option>
+                <option value="Reisen, Verkehr & Mobilität" data-subject="Wortschatz & Alltag">Reisen, Verkehr & Mobilität (Tickets, Wegbeschreibung)</option>
+                <option value="Medien & Konsum" data-subject="Wortschatz & Alltag">Medien & Konsum (Internet, Einkaufen, Reklamation)</option>
+              </optgroup>
+            </select>
+          </div>
+
+          <!-- Study Mode Toggle -->
+          <div class="form-group">
+            <label class="form-label">
+              <span class="label-icon">🎯</span> Lernmodus:
+            </label>
+            <div class="mode-grid">
+              <label class="mode-card active" for="mode-practice">
+                <input type="radio" name="study-mode" id="mode-practice" value="practice" checked>
+                <div class="mode-info">
+                  <div class="mode-title">
+                    <span class="mode-badge practice">Lernmodus</span>
+                    <strong>Interaktives Üben</strong>
+                  </div>
+                  <p class="mode-desc">Sofortiges Feedback und detaillierte deutsche Grammatik-Tipps nach jeder Frage.</p>
+                </div>
+              </label>
+
+              <label class="mode-card" for="mode-exam">
+                <input type="radio" name="study-mode" id="mode-exam" value="exam">
+                <div class="mode-info">
+                  <div class="mode-title">
+                    <span class="mode-badge exam">Prüfung</span>
+                    <strong>Prüfungssimulation</strong>
+                  </div>
+                  <p class="mode-desc">5 Fragen hintereinander ohne Unterbrechung. Gesamtauswertung am Ende.</p>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <button type="submit" id="start-btn" class="btn btn-primary btn-large">
+            <span>Fragen generieren & starten</span>
+            <span class="btn-arrow">→</span>
+          </button>
+        </form>
+      </section>
+
+      <!-- Loading View -->
+      <section id="loading-view" class="view-section hidden" aria-live="polite">
+        <div class="loading-container">
+          <div class="spinner"></div>
+          <h3 id="loading-heading">Fragen werden generiert...</h3>
+          <p id="loading-text">Gemini erstellt 5 authentische B1-Fragen für dein gewähltes Thema.</p>
+          <div class="loading-skeleton">
+            <div class="skeleton-line full"></div>
+            <div class="skeleton-line medium"></div>
+            <div class="skeleton-options">
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
+              <div class="skeleton-box"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Error View -->
+      <section id="error-view" class="view-section hidden" role="alert">
+        <div class="error-container">
+          <div class="error-icon">⚠️</div>
+          <h3>Fehler beim Laden</h3>
+          <p id="error-message">Die Fragen konnten nicht generiert werden. Bitte versuche es erneut.</p>
+          <div class="error-actions">
+            <button type="button" id="retry-btn" class="btn btn-primary">
+              Erneut versuchen
+            </button>
+            <button type="button" id="back-to-setup-btn" class="btn btn-secondary">
+              Thema ändern
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Quiz View -->
+      <section id="quiz-view" class="view-section hidden">
+        <!-- Progress Bar & Meta -->
+        <div class="quiz-header">
+          <div class="quiz-meta">
+            <span id="topic-badge" class="meta-badge">Konjunktiv II</span>
+            <span id="mode-badge" class="meta-badge secondary">Übungsmodus</span>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-info">
+              <span id="progress-text">Frage 1 von 5</span>
+              <span id="score-text" class="score-indicator">Punkte: 0</span>
+            </div>
+            <div class="progress-bar-bg">
+              <div id="progress-bar-fill" class="progress-bar-fill" style="width: 20%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question Card -->
+        <div class="question-container">
+          <div class="question-number-tag" id="question-id-tag">Aufgabe 1</div>
+          <h2 class="question-text" id="question-text">Lädt Frage...</h2>
+
+          <!-- Options Container -->
+          <div class="options-grid" id="options-container">
+            <!-- Dynamically injected option buttons -->
+          </div>
+
+          <!-- Feedback & Tip Box (Practice Mode) -->
+          <div id="feedback-panel" class="feedback-panel hidden" aria-live="polite">
+            <div class="feedback-header">
+              <span id="feedback-icon" class="feedback-icon">✓</span>
+              <h4 id="feedback-title">Richtig!</h4>
+            </div>
+            <p id="feedback-tip" class="feedback-tip"></p>
+          </div>
+
+          <!-- Question Action Footer -->
+          <div class="quiz-footer">
+            <button type="button" id="action-btn" class="btn btn-primary btn-large hidden">
+              <span id="action-btn-text">Nächste Frage</span>
+              <span class="btn-arrow">→</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Results View -->
+      <section id="results-view" class="view-section hidden">
+        <div class="results-container">
+          <div class="results-score-card">
+            <div id="results-trophy" class="results-icon">🏆</div>
+            <h2 id="results-title">Ergebnis</h2>
+            <div class="score-display">
+              <span id="final-score-num" class="score-num">4</span>
+              <span class="score-divider">/</span>
+              <span id="final-total-num" class="score-total">5</span>
+            </div>
+            <div id="percentage-badge" class="percentage-badge">80%</div>
+            <p id="results-message" class="results-message">Ausgezeichnete Leistung! Du bist gut für das B1-Zertifikat vorbereitet.</p>
+          </div>
+
+          <!-- Review Breakdown -->
+          <div class="results-breakdown">
+            <h3>Detaillierte Übersicht aller 5 Fragen:</h3>
+            <div id="review-list" class="review-list">
+              <!-- Dynamically populated review cards -->
+            </div>
+          </div>
+
+          <!-- Results Actions -->
+          <div class="results-actions">
+            <button type="button" id="restart-quiz-btn" class="btn btn-primary btn-large">
+              🔄 Neue Fragen zu diesem Thema
+            </button>
+            <button type="button" id="new-topic-btn" class="btn btn-secondary btn-large">
+              📚 Anderes Thema wählen
+            </button>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Entwickelt für das B1 Goethe-Zertifikat & telc Deutsch B1 • Angetrieben von Google Gemini</p>
+    </footer>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>
