@@ -86,6 +86,16 @@ async function runTests() {
   assert.ok(cssContent.includes(".option-btn.incorrect"), "CSS should define .incorrect state");
   console.log("✓ HTML and CSS content tests passed.");
 
+  // 7. Test client state persistence in app.js
+  console.log("Testing client state persistence mechanisms in app.js...");
+  const appJsContent = await fs.readFile("public/app.js", "utf8");
+  assert.ok(appJsContent.includes("STORAGE_KEY"), "app.js should define STORAGE_KEY");
+  assert.ok(appJsContent.includes("saveProgress"), "app.js should include saveProgress function");
+  assert.ok(appJsContent.includes("clearSavedProgress"), "app.js should include clearSavedProgress function");
+  assert.ok(appJsContent.includes("restoreSavedProgress"), "app.js should include restoreSavedProgress function");
+  assert.ok(appJsContent.includes("visibilitychange"), "app.js should handle visibilitychange lifecycle event");
+  console.log("✓ Client state persistence tests passed.");
+
   console.log("\n==========================================");
   console.log(" All tests passed successfully! ");
   console.log("==========================================");

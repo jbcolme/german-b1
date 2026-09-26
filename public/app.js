@@ -6,6 +6,9 @@
 // Option letter labels for multiple-choice questions
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E'];
 
+// LocalStorage key for session state persistence
+const STORAGE_KEY = 'german_b1_quiz_state';
+
 // Application State
 const appState = {
   view: 'setup', // 'setup' | 'loading' | 'error' | 'quiz' | 'results'
@@ -99,6 +102,133 @@ function updateModeCardStyles() {
 }
 
 /**
+ * Persist current quiz progress to localStorage
+ */
+function saveProgress() {
+  if (appState.questions && appState.questions.length > 0 && appState.view !== 'setup' && appState.view !== 'loading' && appState.view !== 'error') {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+    } catch (e) {
+      console.warn('Could not save quiz state to localStorage', e);
+    }
+  }
+}
+
+/**
+ * Clear saved quiz state from localStorage
+ */
+function clearSavedProgress() {
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch (e) {
+    console.warn('Could not clear quiz state from localStorage', e);
+  }
+}
+
+/**
+ * Restore quiz state from localStorage upon reload/app switch
+ * @returns {boolean} True if a session was restored
+ */
+function restoreSavedProgress() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (!saved) return false;
+
+    const parsedState = JSON.parse(saved);
+    if (parsedState && Array.isArray(parsedState.questions) && parsedState.questions.length > 0) {
+      const savedWasAnswered = Boolean(parsedState.isCurrentQuestionAnswered);
+      Object.assign(appState, parsedState);
+
+      // Restore form/selection inputs
+      if (elements.topicSelect && appState.topic) {
+        elements.topicSelect.value = appState.topic;
+      }
+      elements.modeRadios.forEach((radio) => {
+        if (radio.value === appState.mode) {
+          radio.checked = true;
+        }
+      });
+      updateModeCardStyles();
+
+      if (appState.view === 'quiz') {
+        if (elements.topicBadge) {
+          elements.topicBadge.textContent = appState.topic;
+        }
+        if (elements.modeBadge) {
+          elements.modeBadge.textContent = appState.mode === 'practice' ? 'Übungsmodus' : 'Prüfungssimulation';
+          elements.modeBadge.className = appState.mode === 'practice' ? 'meta-badge' : 'meta-badge secondary';
+        }
+
+        switchView('quiz');
+        renderCurrentQuestion();
+
+        // Restore answered state and UI indications if user had already picked an option on this question
+        const currentAns = appState.userAnswers[appState.currentIndex];
+        if (currentAns !== null && currentAns !== undefined) {
+          const currentQ = appState.questions[appState.currentIndex];
+          const optionButtons = elements.optionsContainer ? elements.optionsContainer.querySelectorAll('.option-btn') : [];
+
+          if (appState.mode === 'practice' && savedWasAnswered) {
+            appState.isCurrentQuestionAnswered = true;
+            const isCorrect = currentAns === currentQ.correct;
+
+            optionButtons.forEach((btn, idx) => {
+              btn.disabled = true;
+              if (idx === currentQ.correct) {
+                btn.classList.add('correct');
+              } else if (idx === currentAns && !isCorrect) {
+                btn.classList.add('incorrect');
+              }
+            });
+
+            if (elements.feedbackPanel) {
+              elements.feedbackPanel.classList.remove('hidden');
+              elements.feedbackPanel.className = `feedback-panel ${isCorrect ? 'success' : 'error'}`;
+              if (elements.feedbackIcon) {
+                elements.feedbackIcon.textContent = isCorrect ? '✓' : '✗';
+              }
+              if (elements.feedbackTitle) {
+                elements.feedbackTitle.textContent = isCorrect ? 'Richtig!' : 'Leider nicht richtig';
+              }
+              if (elements.feedbackTip) {
+                elements.feedbackTip.textContent = currentQ.tip || (isCorrect ? 'Ausgezeichnet!' : `Die richtige Antwort ist: ${currentQ.options[currentQ.correct]}`);
+              }
+            }
+
+            if (elements.actionBtn) {
+              elements.actionBtn.classList.remove('hidden');
+            }
+
+            if (elements.scoreText) {
+              elements.scoreText.textContent = `Punkte: ${appState.score} / ${appState.currentIndex + 1}`;
+            }
+          } else if (appState.mode === 'exam') {
+            optionButtons.forEach((btn, idx) => {
+              if (idx === currentAns) {
+                btn.classList.add('selected');
+              } else {
+                btn.classList.remove('selected');
+              }
+            });
+            if (elements.actionBtn) {
+              elements.actionBtn.classList.remove('hidden');
+            }
+          }
+        }
+        return true;
+      } else if (appState.view === 'results') {
+        finishQuiz();
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not restore quiz state', e);
+    clearSavedProgress();
+  }
+  return false;
+}
+
+/**
  * Fetch 5 questions from the serverless API proxy
  */
 async function loadQuestions() {
@@ -159,6 +289,7 @@ function startQuiz(questions) {
 
   switchView('quiz');
   renderCurrentQuestion();
+  saveProgress();
 }
 
 /**
@@ -292,6 +423,8 @@ function handleOptionClick(selectedIndex) {
     if (elements.scoreText) {
       elements.scoreText.textContent = `Punkte: ${appState.score} / ${appState.currentIndex + 1}`;
     }
+
+    saveProgress();
   } else {
     // Exam Simulation Mode: Allow selection, advance with action button
     appState.userAnswers[appState.currentIndex] = selectedIndex;
@@ -308,6 +441,8 @@ function handleOptionClick(selectedIndex) {
     if (elements.actionBtn) {
       elements.actionBtn.classList.remove('hidden');
     }
+
+    saveProgress();
   }
 }
 
@@ -327,6 +462,7 @@ function handleNextAction() {
   if (appState.currentIndex < total - 1) {
     appState.currentIndex += 1;
     renderCurrentQuestion();
+    saveProgress();
   } else {
     finishQuiz();
   }
@@ -421,6 +557,7 @@ function finishQuiz() {
   }
 
   switchView('results');
+  saveProgress();
 }
 
 /**
@@ -464,21 +601,40 @@ function init() {
 
   // Back to Setup from error
   if (elements.backToSetupBtn) {
-    elements.backToSetupBtn.addEventListener('click', () => switchView('setup'));
+    elements.backToSetupBtn.addEventListener('click', () => {
+      clearSavedProgress();
+      switchView('setup');
+    });
   }
 
   // Restart Quiz for same topic
   if (elements.restartQuizBtn) {
-    elements.restartQuizBtn.addEventListener('click', loadQuestions);
+    elements.restartQuizBtn.addEventListener('click', () => {
+      clearSavedProgress();
+      loadQuestions();
+    });
   }
 
   // Pick new topic
   if (elements.newTopicBtn) {
-    elements.newTopicBtn.addEventListener('click', () => switchView('setup'));
+    elements.newTopicBtn.addEventListener('click', () => {
+      clearSavedProgress();
+      switchView('setup');
+    });
   }
+
+  // Mobile background & unload listeners to guarantee state persistence
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      saveProgress();
+    }
+  });
+  window.addEventListener('pagehide', saveProgress);
+  window.addEventListener('beforeunload', saveProgress);
 
   // Initial style sync
   updateModeCardStyles();
+  restoreSavedProgress();
 }
 
 // Start application when DOM is ready
